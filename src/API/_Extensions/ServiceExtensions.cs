@@ -1,5 +1,4 @@
-﻿using Domain.Validators;
-using FluentValidation;
+﻿using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -7,9 +6,9 @@ using Serilog;
 using System.Text;
 using Microsoft.OpenApi.Models;
 using Application.Security.AuthorizationHandlers;
-using Application.Security.Requirements;
 using Microsoft.AspNetCore.Authorization;
 using Asp.Versioning;
+using API.Validators;
 
 namespace API._Extensions;
 
@@ -31,7 +30,7 @@ public static class ServiceExtensions
 
         if (string.IsNullOrEmpty(jwtSecret) || string.IsNullOrEmpty(jwtIssuer) || string.IsNullOrEmpty(jwtAudience))
         {
-            throw new ArgumentNullException(nameof(jwtSecret), "JWT is not configured.");
+            throw new ArgumentNullException("JWT Settings", "JWT is not configured.");
         }
 
         var key = Encoding.ASCII.GetBytes(jwtSecret);
@@ -52,7 +51,8 @@ public static class ServiceExtensions
                 ValidateIssuerSigningKey = true,
                 ValidIssuer = jwtIssuer,
                 ValidAudience = jwtAudience,
-                IssuerSigningKey = new SymmetricSecurityKey(key)
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                ValidateLifetime = true
             };
         });
 
@@ -63,7 +63,9 @@ public static class ServiceExtensions
     {
         services.AddSingleton<IAuthorizationHandler, RoleAuthorizationHandler>();
 
-        services.AddAuthorizationBuilder().AddPolicy("AdminPolicy", policy => policy.Requirements.Add(new RoleRequirement("Admin")));
+        services.AddAuthorizationBuilder()
+            .AddPolicy("AdminPolicy", policy => policy.RequireRole("Admin"))
+            .AddPolicy("OperatorPolicy", policy => policy.RequireRole("Operator", "Admin"));
 
         return services;
     }
@@ -96,6 +98,30 @@ public static class ServiceExtensions
                     Email = "brenobaldovinotti@gmail.com"
                 }
             });
+
+            c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                Description = "JWT Authorization header using the Bearer scheme. Example: \"Bearer {token}\"",
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.ApiKey,
+                Scheme = "Bearer"
+            });
+
+            c.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    Array.Empty<string>()
+                }
+            });
         });
 
         return services;
@@ -104,6 +130,11 @@ public static class ServiceExtensions
     public static IServiceCollection AddCustomFluentValidation(this IServiceCollection services)
     {
         services.AddFluentValidationAutoValidation();
+
+        services.AddValidatorsFromAssemblyContaining<CreateIssueRequestDtoValidator>();
+        services.AddValidatorsFromAssemblyContaining<UpdateIssueRequestDtoValidator>();
+        services.AddValidatorsFromAssemblyContaining<CreateIssueRequestDtoValidator>();
+        services.AddValidatorsFromAssemblyContaining<LoginCommandValidator>();
 
         return services;
     }
