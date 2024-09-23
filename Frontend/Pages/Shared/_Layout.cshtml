@@ -12,24 +12,23 @@
     <header>
         <nav>
             <ul>
-                <li><a href="/HelloWorld">Home</a></li>
                 <li><a href="/Login">Login</a></li>
+                <li><a href="/Index">Todo List</a></li>
             </ul>
         </nav>
     </header>
 
     <div class="container">
-        @RenderBody()
+        @RenderBody() 
     </div>
 
     <footer>
         <p>&copy; 2024 - My Application</p>
     </footer>
 
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-
-    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

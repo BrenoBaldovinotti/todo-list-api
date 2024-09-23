@@ -1,11 +1,43 @@
 ﻿@page
+@using _Frontend.Pages
 @model IndexModel
 @{
     ViewData["Title"] = "Home page";
-    Layout = "~/Pages/Shared/_Layout.cshtml";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<h2>Todo List</h2>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">
+        @Model.ErrorMessage
+    </div>
+}
+
+<form method="post" asp-page-handler="AddIssue">
+    <div class="form-group">
+        <input type="text" class="form-control" asp-for="NewIssueName" placeholder="Enter new issue" required />
+        <span asp-validation-for="NewIssueName" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary mt-2">Add Issue</button>
+</form>
+
+<h4 class="mt-4">Your Issues</h4>
+<ul class="list-group">
+    @foreach (var issue in Model.Issues)
+    {
+        <li class="list-group-item d-flex justify-content-between">
+            <span>@issue.Name @(issue.IsCompleted ? "(Completed)" : "")</span>
+            @if (!issue.IsCompleted)
+            {
+                <form method="post" asp-page-handler="CompleteIssue" asp-route-id="@issue.Id">
+                    <button type="submit" class="btn btn-success btn-sm">Complete</button>
+                </form>
+            }
+        </li>
+    }
+</ul>
+
+<form method="post" asp-page-handler="RemoveCompleted">
+    <button type="submit" class="btn btn-danger mt-4">Remove Completed Issues</button>
+</form>
