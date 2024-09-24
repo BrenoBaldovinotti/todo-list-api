@@ -1,0 +1,63 @@
+﻿@page
+@using _Frontend.Pages
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<h2>Todo List</h2>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">
+        @Model.ErrorMessage
+    </div>
+}
+
+<form method="post" asp-page-handler="AddIssue">
+    <div class="form-group">
+        <input type="text" class="form-control" asp-for="NewIssueName" placeholder="Enter new issue" required />
+        <span asp-validation-for="NewIssueName" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary mt-2">Add Issue</button>
+</form>
+
+<h4 class="mt-4">Your Issues</h4>
+<ul class="list-group">
+    @foreach (var issue in Model.Issues)
+    {
+        <li class="list-group-item d-flex justify-content-between">
+            <div>
+                @if (Model.EditableIssueId == issue.Id)
+                {
+                    <!-- Show edit form for this issue -->
+                    <form method="post" asp-page-handler="UpdateIssueName" asp-route-id="@issue.Id">
+                        <div class="form-group">
+                            <input type="text" class="form-control" asp-for="UpdatedIssueName" value="@issue.Name" required />
+                        </div>
+                        <button type="submit" class="btn btn-success btn-sm">Save</button>
+                        <a href="/Index" class="btn btn-secondary btn-sm">Cancel</a>
+                    </form>
+                }
+                else
+                {
+                    <span>@issue.Name @(issue.IsCompleted ? "(Completed)" : "")</span>
+                }
+            </div>
+
+            <div>
+                @if (!issue.IsCompleted)
+                {
+                    <form method="post" asp-page-handler="CompleteIssue" asp-route-id="@issue.Id" style="display:inline;">
+                        <button type="submit" class="btn btn-success btn-sm">Complete</button>
+                    </form>
+                    <button class="btn btn-warning btn-sm" onclick="window.location.href='@Url.Page("/Index", new { editIssueId = issue.Id })'">Edit</button>
+                }
+            </div>
+        </li>
+    }
+</ul>
+
+<form method="post" asp-page-handler="RemoveCompleted">
+    <button type="submit" class="btn btn-danger mt-4">Remove Completed Issues</button>
+</form>

@@ -33,7 +33,7 @@ public class IssuesController(IAuthorizationService authorizationService, IMedia
         return Success();
     }
 
-    [HttpPut("issues/{id}")]
+    [HttpPut("{id}")]
     public async Task<IActionResult> UpdateIssueName(Guid id, [FromBody] UpdateIssueRequestDto requestDto)
     {
         await mediator.Send(new UpdateIssueNameCommand(id, requestDto.Name));

@@ -1,0 +1,11 @@
+﻿@page
+@model ErrorModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Error";
+    ViewData["ErrorMessage"] = Model.ErrorMessage;
+}
+
+<h1>An unexpected error occurred</h1>
+<p>@Model.ErrorMessage</p>
+<p><a href="/Login">Go back to the Login page</a></p>
