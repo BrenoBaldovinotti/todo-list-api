@@ -1,6 +1,6 @@
 using _Frontend.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;  
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -11,15 +11,23 @@ namespace _Frontend.Pages
     public class IndexModel(HttpClient httpClient) : PageModel
     {
         [BindProperty]
-        public required string NewIssueName { get; set; }
-        public IEnumerable<IssueDto> Issues { get; set; } = [];
-        public string? ErrorMessage { get; set; }
+        public string? NewIssueName { get; set; }
 
-        public async Task OnGet()
+        [BindProperty]
+        public string? UpdatedIssueName { get; set; }
+
+        public IEnumerable<IssueDto> Issues { get; set; } = [];
+
+        public string? ErrorMessage { get; set; }
+        public Guid? EditableIssueId { get; set; }
+
+        public async Task OnGet(Guid? editIssueId)
         {
+            EditableIssueId = editIssueId;
             await LoadIssues();
         }
 
+        // Handler to add a new issue
         public async Task<IActionResult> OnPostAddIssue()
         {
             if (!ModelState.IsValid)
@@ -36,7 +44,6 @@ namespace _Frontend.Pages
             }
 
             var newIssue = new { Name = NewIssueName };
-
             var jsonContent = new StringContent(JsonSerializer.Serialize(newIssue), Encoding.UTF8, "application/json");
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
@@ -127,6 +134,36 @@ namespace _Frontend.Pages
             return Page();
         }
 
+        public async Task<IActionResult> OnPostUpdateIssueName(Guid id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return Page();
+            }
+
+            var token = HttpContext.Session.GetString("Token");
+
+            if (string.IsNullOrEmpty(token))
+            {
+                ErrorMessage = "Unauthorized. Please login again.";
+                return RedirectToPage("/Login");
+            }
+
+            var updateIssueRequest = new { Name = UpdatedIssueName };
+            var jsonContent = new StringContent(JsonSerializer.Serialize(updateIssueRequest), Encoding.UTF8, "application/json");
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await httpClient.PutAsync($"http://localhost:5224/api/v1/issues/{id}", jsonContent);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return RedirectToPage("/Index");
+            }
+
+            ErrorMessage = "Failed to update issue name.";
+            return Page();
+        }
+
         private async Task LoadIssues()
         {
             var token = HttpContext.Session.GetString("Token");
@@ -167,7 +204,7 @@ namespace _Frontend.Pages
             public Guid Id { get; set; }
 
             [JsonPropertyName("name")]
-            public required string Name { get; set; }
+            public required string Name { get; set; } 
 
             [JsonPropertyName("isCompleted")]
             public bool IsCompleted { get; set; }

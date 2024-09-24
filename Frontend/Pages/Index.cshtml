@@ -27,13 +27,33 @@
     @foreach (var issue in Model.Issues)
     {
         <li class="list-group-item d-flex justify-content-between">
-            <span>@issue.Name @(issue.IsCompleted ? "(Completed)" : "")</span>
-            @if (!issue.IsCompleted)
-            {
-                <form method="post" asp-page-handler="CompleteIssue" asp-route-id="@issue.Id">
-                    <button type="submit" class="btn btn-success btn-sm">Complete</button>
-                </form>
-            }
+            <div>
+                @if (Model.EditableIssueId == issue.Id)
+                {
+                    <!-- Show edit form for this issue -->
+                    <form method="post" asp-page-handler="UpdateIssueName" asp-route-id="@issue.Id">
+                        <div class="form-group">
+                            <input type="text" class="form-control" asp-for="UpdatedIssueName" value="@issue.Name" required />
+                        </div>
+                        <button type="submit" class="btn btn-success btn-sm">Save</button>
+                        <a href="/Index" class="btn btn-secondary btn-sm">Cancel</a>
+                    </form>
+                }
+                else
+                {
+                    <span>@issue.Name @(issue.IsCompleted ? "(Completed)" : "")</span>
+                }
+            </div>
+
+            <div>
+                @if (!issue.IsCompleted)
+                {
+                    <form method="post" asp-page-handler="CompleteIssue" asp-route-id="@issue.Id" style="display:inline;">
+                        <button type="submit" class="btn btn-success btn-sm">Complete</button>
+                    </form>
+                    <button class="btn btn-warning btn-sm" onclick="window.location.href='@Url.Page("/Index", new { editIssueId = issue.Id })'">Edit</button>
+                }
+            </div>
         </li>
     }
 </ul>
